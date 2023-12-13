@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 
+
 # Parameters for ShiTomasi corner detection
 feature_params = dict(maxCorners=100, qualityLevel=0.3, minDistance=7, blockSize=7)
 
