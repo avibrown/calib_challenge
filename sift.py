@@ -2,18 +2,30 @@ import cv2
 import numpy as np
 from sklearn.cluster import DBSCAN
 
-vid = "./labeled/1.hevc"
+vid = "./unlabeled/6.hevc"
 cap = cv2.VideoCapture(vid)
 
-feature_params = dict(maxCorners=1000, qualityLevel=0.00001, minDistance=10, blockSize=9)
+feature_params = dict(maxCorners=100000, qualityLevel=0.05, minDistance=1, blockSize=9)
 lk_params = dict(winSize=(15, 15), maxLevel=10, criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
 
 ret, old_frame = cap.read()
+height, width = old_frame.shape[:2]
+
+# Calculate dimensions for the square
+square_size = min(int(height/3), int(width/3))  # Size of the square
+top_left_x = int(width/2 - square_size/2)
+top_left_y = int(height/2 - square_size/2)
+
+# Create a mask for the square
+mask = np.zeros_like(old_frame)
+mask[top_left_y:top_left_y + square_size, top_left_x:top_left_x + square_size] = 255
+mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+
 old_gray = cv2.cvtColor(old_frame, cv2.COLOR_BGR2GRAY)
-p0 = cv2.goodFeaturesToTrack(old_gray, mask=None, **feature_params)
+p0 = cv2.goodFeaturesToTrack(old_gray, mask=mask, **feature_params)  # Apply mask here
 
 scaling_factor = 30
-percent = 50  # Focus on the fastest 5%
+percent = 1
 
 while True:
     ret, frame = cap.read()
@@ -23,6 +35,7 @@ while True:
 
     good_new = p1[st == 1]
     good_old = p0[st == 1]
+
 
     # Calculate velocities
     velocities = np.sqrt((good_new[:, 0] - good_old[:, 0])**2 + (good_new[:, 1] - good_old[:, 1])**2)
